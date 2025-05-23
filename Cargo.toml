@@ -1,0 +1,20 @@
+[package]
+name = "state-proof-service"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+common-merkle-proofs = { package = "common", git = "https://github.com/timewave-computer/zk-merkle-proofs", default-features = false }
+ethereum-merkle-proofs = { package = "ethereum", git = "https://github.com/timewave-computer/zk-merkle-proofs", default-features = false, features = [
+    "no-zkvm",
+] }
+valence-coprocessor = { git = "https://github.com/timewave-computer/valence-coprocessor.git", tag = "v0.1.8", default-features = false }
+serde_json = { version = "1.0.140", default-features = false, features = [
+    "alloc",
+] }
+anyhow = { version = "1.0.83", default-features = false }
+axum = { version = "0.7", features = ["json"] }
+tokio = { version = "1.0", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+tower-http = { version = "0.5", features = ["cors"] }
+reqwest = { version = "0.11", features = ["json"] }

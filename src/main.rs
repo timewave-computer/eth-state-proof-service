@@ -4,9 +4,8 @@ use axum::{
     Router, extract::Json, http::StatusCode, response::IntoResponse, response::Response,
     routing::post,
 };
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use tower_http::cors::{Any, CorsLayer};
-use valence_coprocessor::StateProof;
 
 mod util;
 
@@ -74,7 +73,10 @@ async fn main() {
 /// Wrapper handler that logs invalid requests before passing them to the main handler
 async fn handle_state_proof(result: Result<Json<StateProofRequest>, JsonRejection>) -> Response {
     match result {
-        Ok(payload) => get_state_proof_handler(payload).await.into_response(),
+        Ok(payload) => {
+            println!("Request Ok!");
+            get_state_proof_handler(payload).await.into_response()
+        }
         Err(e) => {
             println!("Invalid request received: {}", e);
             (

@@ -4,6 +4,7 @@ use ethereum_merkle_proofs::{
 };
 use valence_coprocessor::StateProof;
 
+use anyhow::Result;
 /// Retrieves an Ethereum state proof for a given address and block height.
 ///
 /// This function generates either an account proof or a storage proof depending on whether
@@ -49,43 +50,47 @@ pub async fn get_state_proof(
     ethereum_url: &str,
     height: u64,
     key: Option<&str>,
-) -> anyhow::Result<StateProof> {
+) -> Result<Vec<u8>> {
     let merkle_prover = EvmMerkleRpcClient {
         rpc_url: ethereum_url.to_string(),
     };
 
-    // Generate either a storage proof (if key is provided) or an account proof
-    match key {
+    let state_proof = match key {
         Some(key) => {
-            // Request a storage proof for the specified key
             let combined_proof = merkle_prover
                 .get_account_and_storage_proof(key, address, height)
                 .await
                 .map_err(|e| anyhow::anyhow!("Failed to get storage proof: {}", e))?;
-            println!("Combined proof: {:?}", combined_proof);
+
             let simple_proof = EthereumSimpleProof::from_combined_proof(combined_proof);
             let proof = EthereumProofType::Simple(simple_proof);
             let proof_bytes = serde_json::to_vec(&proof)?;
-            Ok(StateProof {
+
+            StateProof {
                 domain: "ethereum".to_string(),
-                // TODO: Implement getting the actual block root
-                // This requires fetching the block header for the specified height
-                root: [0; 32],
+                root: [0u8; 32],
                 payload: Vec::new(),
                 proof: proof_bytes,
-            })
+            }
         }
         None => {
-            // Request an account proof
-            let account_proof = merkle_prover.get_account_proof(address, height).await;
-            let proof = EthereumProofType::Account(account_proof.unwrap());
+            let account_proof = merkle_prover
+                .get_account_proof(address, height)
+                .await
+                .map_err(|e| anyhow::anyhow!("Failed to get account proof: {}", e))?;
+
+            let proof = EthereumProofType::Account(account_proof);
             let proof_bytes = serde_json::to_vec(&proof)?;
-            Ok(StateProof {
+
+            StateProof {
                 domain: "ethereum".to_string(),
-                root: [0; 32],
+                root: [0u8; 32],
                 payload: Vec::new(),
                 proof: proof_bytes,
-            })
+            }
         }
-    }
+    };
+
+    // ✅ Serialize the entire StateProof struct to JSON and return the bytes
+    Ok(serde_json::to_vec(&state_proof)?)
 }

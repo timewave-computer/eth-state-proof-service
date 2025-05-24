@@ -80,7 +80,12 @@ async fn get_state_proof_handler(Json(payload): Json<StateProofRequest>) -> impl
     )
     .await
     {
-        Ok(proof) => Json(proof).into_response(),
+        Ok(json_bytes) => (
+            StatusCode::OK,
+            [("Content-Type", "application/json")],
+            json_bytes,
+        )
+            .into_response(),
         Err(e) => {
             let error_response = json!({
                 "status": 500,

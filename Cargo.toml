@@ -8,7 +8,7 @@ common-merkle-proofs = { package = "common", git = "https://github.com/timewave-
 ethereum-merkle-proofs = { package = "ethereum", git = "https://github.com/timewave-computer/zk-merkle-proofs", default-features = false, features = [
     "no-zkvm",
 ] }
-valence-coprocessor = { git = "https://github.com/timewave-computer/valence-coprocessor.git", tag = "v0.1.8", default-features = false }
+valence-coprocessor = { git = "https://github.com/timewave-computer/valence-coprocessor.git", tag = "v0.1.11", default-features = false }
 serde_json = { version = "1.0.140", default-features = false, features = [
     "alloc",
 ] }

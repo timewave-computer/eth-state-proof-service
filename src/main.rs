@@ -44,7 +44,7 @@ async fn main() {
         .route("/", post(handle_state_proof))
         .layer(cors);
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:7777").await.unwrap();
     println!(
         "State proof service listening on {}",
         listener.local_addr().unwrap()

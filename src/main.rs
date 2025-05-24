@@ -71,6 +71,9 @@ async fn handle_state_proof(result: Result<Json<StateProofRequest>, JsonRejectio
 }
 
 /// Handler for the state proof endpoint.
+use axum::body::Body;
+use axum::http::Response as HttpResponse;
+
 async fn get_state_proof_handler(Json(payload): Json<StateProofRequest>) -> impl IntoResponse {
     match get_state_proof(
         &payload.address,
@@ -80,12 +83,12 @@ async fn get_state_proof_handler(Json(payload): Json<StateProofRequest>) -> impl
     )
     .await
     {
-        Ok(json_bytes) => (
-            StatusCode::OK,
-            [("Content-Type", "application/json")],
-            json_bytes,
-        )
+        Ok(json_bytes) => HttpResponse::builder()
+            .status(StatusCode::OK)
+            .body(Body::from(json_bytes))
+            .unwrap()
             .into_response(),
+
         Err(e) => {
             let error_response = json!({
                 "status": 500,

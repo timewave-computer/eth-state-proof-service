@@ -1,5 +1,9 @@
 use crate::util::get_state_proof;
-use axum::{Router, extract::Json, http::StatusCode, response::IntoResponse, routing::post};
+use axum::extract::rejection::JsonRejection;
+use axum::{
+    Router, extract::Json, http::StatusCode, response::IntoResponse, response::Response,
+    routing::post,
+};
 use serde::{Deserialize, Serialize};
 use tower_http::cors::{Any, CorsLayer};
 use valence_coprocessor::StateProof;
@@ -55,18 +59,31 @@ async fn main() {
 
     // Create the API router with a single endpoint for state proofs
     let app = Router::new()
-        .route("/", post(get_state_proof_handler))
+        .route("/", post(handle_state_proof))
         .layer(cors);
 
     // Start the server on localhost:3000
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     println!(
         "State proof service listening on {}",
         listener.local_addr().unwrap()
     );
     axum::serve(listener, app).await.unwrap();
+}
+
+/// Wrapper handler that logs invalid requests before passing them to the main handler
+async fn handle_state_proof(result: Result<Json<StateProofRequest>, JsonRejection>) -> Response {
+    match result {
+        Ok(payload) => get_state_proof_handler(payload).await.into_response(),
+        Err(e) => {
+            println!("Invalid request received: {}", e);
+            (
+                StatusCode::BAD_REQUEST,
+                format!("Invalid request format: {}", e),
+            )
+                .into_response()
+        }
+    }
 }
 
 /// Handler for the state proof endpoint.

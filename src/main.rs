@@ -113,15 +113,7 @@ async fn get_state_proof_handler(Json(payload): Json<StateProofRequest>) -> impl
     )
     .await
     {
-        Ok(proof) => {
-            let response = StateProof {
-                domain: proof.domain,
-                root: proof.root,
-                payload: proof.payload,
-                proof: proof.proof,
-            };
-            (StatusCode::OK, Json(response)).into_response()
-        }
+        Ok(proof) => (StatusCode::OK, Json(proof)).into_response(),
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
             format!("Error getting state proof: {}", e),

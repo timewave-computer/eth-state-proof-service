@@ -69,6 +69,7 @@ async fn main() {
     );
     axum::serve(listener, app).await.unwrap();
 }
+use serde_json::json;
 
 /// Wrapper handler that logs invalid requests before passing them to the main handler
 async fn handle_state_proof(result: Result<Json<StateProofRequest>, JsonRejection>) -> Response {
@@ -79,33 +80,16 @@ async fn handle_state_proof(result: Result<Json<StateProofRequest>, JsonRejectio
         }
         Err(e) => {
             println!("Invalid request received: {}", e);
-            (
-                StatusCode::BAD_REQUEST,
-                format!("Invalid request format: {}", e),
-            )
-                .into_response()
+            let error_response = json!({
+                "status": 400,
+                "error": format!("Invalid request format: {}", e),
+            });
+            (StatusCode::BAD_REQUEST, Json(error_response)).into_response()
         }
     }
 }
 
-/// Handler for the state proof endpoint.
-///
-/// This handler processes incoming state proof requests and returns either a valid proof
-/// or an error response. It supports both account proofs and storage proofs.
-///
-/// # Arguments
-/// * `payload` - The deserialized StateProofRequest containing the proof parameters
-///
-/// # Returns
-/// * `impl IntoResponse` - Either:
-///   * 200 OK with the StateProofResponse if successful
-///   * 500 Internal Server Error with error message if the proof generation fails
-///
-/// # Errors
-/// The handler will return a 500 error if:
-/// * The Ethereum RPC request fails
-/// * The proof generation fails
-/// * The proof serialization fails
+/// Handler for the state proof endpoint
 async fn get_state_proof_handler(Json(payload): Json<StateProofRequest>) -> impl IntoResponse {
     match get_state_proof(
         &payload.address,
@@ -115,11 +99,19 @@ async fn get_state_proof_handler(Json(payload): Json<StateProofRequest>) -> impl
     )
     .await
     {
-        Ok(proof) => (StatusCode::OK, Json(proof)).into_response(),
-        Err(e) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Error getting state proof: {}", e),
-        )
-            .into_response(),
+        Ok(proof) => {
+            let success_response = json!({
+                "status": 200,
+                "data": proof
+            });
+            (StatusCode::OK, Json(success_response)).into_response()
+        }
+        Err(e) => {
+            let error_response = json!({
+                "status": 500,
+                "error": format!("Error getting state proof: {}", e)
+            });
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(error_response)).into_response()
+        }
     }
 }

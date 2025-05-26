@@ -91,6 +91,5 @@ pub async fn get_state_proof(
         }
     };
 
-    // ✅ Serialize the entire StateProof struct to JSON and return the bytes
     Ok(serde_json::to_vec(&state_proof)?)
 }
